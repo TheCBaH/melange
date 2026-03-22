@@ -1,0 +1,33 @@
+name: Devcontainer Build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout
+      uses: actions/checkout@v6
+      with:
+        submodules: recursive
+    - name: devcontainer
+      uses: ./.github/workflows/actions/devcontainer
+      id: devcontainer
+      with:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    - name: setup
+      run: |
+        echo 'EXEC=${{ steps.devcontainer.outputs.exec }}' >> $GITHUB_ENV
+    - name: install dependencies
+      run: |
+        ${{ env.EXEC }} bash -c '. /etc/bash.bashrc && sudo OPAMCONFIRMLEVEL=unsafe-yes OPAMROOT=$OPAMROOT make opam-install-test'
+    - name: build
+      run: |
+        ${{ env.EXEC }} opam exec -- dune build
+    - name: test
+      run: |
+        ${{ env.EXEC }} opam exec -- dune runtest

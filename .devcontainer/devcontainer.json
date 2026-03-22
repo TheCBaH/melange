@@ -1,0 +1,36 @@
+// For format details, see https://aka.ms/devcontainer.json.
+{
+    "name": "ocaml devcontainers examples",
+    "build":  {
+        "dockerfile": "Dockerfile"
+    },
+    "features": {
+        "ghcr.io/devcontainers/features/common-utils:2": {
+            "installZsh": "true",
+            "username": "vscode",
+            "userUid": "1000",
+            "userGid": "1000",
+            "upgradePackages": "false"
+        },
+        "ghcr.io/devcontainers/features/nix:1": {
+            "extraNixConfig": "experimental-features = nix-command flakes\ntrusted-users = root vscode"
+        },
+        "./features/ocaml": {
+            "version": "5.5.1",
+            "packages": "alcotest cmdliner cppo js_of_ocaml menhir merlin ppxlib odoc reason-react-ppx"
+        }
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ocamllabs.ocaml-platform"
+            ]
+        }
+    },
+    "remoteUser": "vscode",
+    "postCreateCommand": {
+        "submodules": "git submodule update --init --recursive --depth 1",
+        "opam": "sudo sh -ceux \"chown -R $(id -u):$(id -g) ${OPAMROOT}/log\""
+    },
+    "waitFor": "postCreateCommand"
+}
