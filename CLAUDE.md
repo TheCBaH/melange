@@ -8,6 +8,39 @@ Melange is a compiler toolchain that compiles OCaml/Reason to JavaScript. It's a
 
 ## Build Commands
 
+### Nix (preferred — this is what CI uses)
+
+The flake dev shell provides the exact toolchain CI uses (OCaml 5.5 + dune 3.24 +
+node/mocha/reason). Prefix any dune command with the dev shell:
+
+```sh
+nix develop -L '.?submodules=1#' --command dune build bin/melc.exe   # Build the compiler
+nix develop -L '.?submodules=1#' --command dune build               # Build everything
+nix develop -L '.?submodules=1#' --command dune runtest             # Unit + cram tests
+nix develop -L '.?submodules=1#' --command dune build @test/blackbox-tests/<name>/runtest
+nix develop -L '.?submodules=1#' --command dune build @melange-runtime-tests  # regen jscomp/test/dist
+make shell                    # same dev shell, interactive ($SHELL)
+make nix-<cmd>                # runs a single-word command in the dev shell
+```
+
+The dev shell only supplies dependencies: sources (including
+`vendor/melange-compiler-libs`) come from the working tree, so local submodule
+edits are picked up by `dune build` immediately. `_build/` is shared with any
+opam switch you may also have — switching between the two forces a full rebuild,
+so pick one and stay there.
+
+Sandboxed builds of the packages themselves do *not* use the working tree's
+submodule; `nix/default.nix` replaces `vendor/melange-compiler-libs` with the
+`melange-compiler-libs` flake input. To validate local submodule changes that
+way, override the input:
+
+```sh
+nix build -L '.?submodules=1#melange' \
+  --override-input melange-compiler-libs path:./vendor/melange-compiler-libs
+```
+
+### OPAM (alternative)
+
 ```sh
 opam exec -- dune build                    # Build the whole project
 opam exec -- dune runtest                  # Run all tests (unit + cram)
@@ -22,6 +55,9 @@ opam exec -- dune exec -- bin/melc.exe  # Run the dev compiler
 opam exec -- dune build @test/blackbox-tests/<test-name>/runtest   # Run a single cram test
 opam exec -- dune runtest test/unit-tests                           # Run unit tests only
 ```
+
+Cram test output is auto-promoted: after a failing run, `dune promote` (or
+`dune build @runtest --auto-promote`) updates the `.t` files.
 
 ### Setup (OPAM)
 
@@ -72,13 +108,26 @@ The compiler lives in `jscomp/`:
 
 - **Unit tests** (`test/unit-tests/`): Alcotest-based, ~12 test modules
 - **Cram tests** (`test/blackbox-tests/`): 100+ `.t` files for integration/blackbox testing
-- **JS snapshot tests** (`jscomp/test/dist`, `jscomp/test/dist-es6`): built manually by commenting the only line in `jscomp/dune` then running `opam exec -- dune build`
+- **JS snapshot tests** (`jscomp/test/dist`): checked-in JS produced by the two
+  `melange.emit` stanzas in `jscomp/test/dune` (commonjs + esm). Regenerate with
+  `dune build @melange-runtime-tests` — the stanzas `promote` into the source
+  tree, so changed output shows up as a working-tree diff. The nix package's
+  `postCheck` builds that alias and then runs `mocha "jscomp/test/dist/**/*_test.*js"`,
+  i.e. the snapshots are also *executed* in CI.
 - Full CI via Nix: `nix build .#melange .#melange-playground`
 
 ## Key Details
 
 - OCaml 5.4, Dune 3.21+, Menhir for parser generation
 - `.ocamlformat` config: `parse-docstrings = false`
-- JS reserved keywords map in `jscomp/ext/js_reserved_map.ml` (auto-updated via GitHub Action)
+- JS reserved keywords generated into `js_reserved_map.ml` by `jscomp/melstd/dune`
+  from `jscomp/melstd/gen/keywords.list` (list auto-updated via GitHub Action)
 - Flow parser vendored in `jscomp/js_parser/` — upgrade process documented in CONTRIBUTING.md
+- `jscomp/core/j.ml` (the JS IR) is parsed *as an interface* by
+  `jscomp/core/gen/gen_traversal.ml` to generate `js_record_{iter,map,fold}`. It
+  picks the first type group carrying attributes, so a doc comment (`(** … *)`)
+  in that file silently retargets the generator — use `(* … *)` there.
+- A module's runtime fields are named by `Runtime_fields` (in compiler-libs):
+  OCaml namespaces are flattened into the JS object's single one, with
+  extension constructors and classes suffixed `$extension` / `$class`
 - Submodule changes to `vendor/melange-compiler-libs` require updating the `flake.nix` input URL and running `nix flake update`
