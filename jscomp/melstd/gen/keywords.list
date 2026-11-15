@@ -114,6 +114,7 @@ CSSViewTransitionRule
 CanvasCaptureMediaStreamTrack
 CanvasFilter
 CanvasGradient
+CanvasPaintEvent
 CanvasPattern
 CanvasRenderingContext2D
 CaretPosition
@@ -172,6 +173,8 @@ DragEvent
 DynamicsCompressorNode
 EditContext
 Element
+ElementGeometryUpdateEvent
+ElementImage
 ElementInternals
 EncodedAudioChunk
 EncodedVideoChunk
@@ -218,6 +221,7 @@ HTMLBRElement
 HTMLBaseElement
 HTMLBodyElement
 HTMLButtonElement
+HTMLCameraElement
 HTMLCanvasElement
 HTMLCollection
 HTMLDListElement
@@ -255,6 +259,7 @@ HTMLMediaElement
 HTMLMenuElement
 HTMLMetaElement
 HTMLMeterElement
+HTMLMicrophoneElement
 HTMLModElement
 HTMLOListElement
 HTMLObjectElement
@@ -391,6 +396,7 @@ Node
 NodeFilter
 NodeIterator
 NodeList
+NodeRange
 NotRestoredReasonDetails
 NotRestoredReasons
 Notification
@@ -401,6 +407,7 @@ OfflineAudioCompletionEvent
 OfflineAudioContext
 OffscreenCanvas
 OffscreenCanvasRenderingContext2D
+OpaqueRange
 Option
 Origin
 OscillatorNode
@@ -435,6 +442,7 @@ PeriodicSyncManager
 PeriodicWave
 PermissionStatus
 Permissions
+PermissionsPolicy
 PictureInPictureEvent
 PictureInPictureWindow
 Plugin
@@ -672,6 +680,7 @@ TransformStreamDefaultController
 TransitionEvent
 TreeWalker
 TrustedHTML
+TrustedHTMLParserOptions
 TrustedScript
 TrustedScriptURL
 TrustedTypePolicy
